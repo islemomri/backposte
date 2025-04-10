@@ -145,5 +145,12 @@ public class DiplomeService implements IDiplomeService{
         diplome.setTypeDiplome(typeDiplome);
         return diplomeRepository.save(diplome);
     }
+	
+	@Override
+	@Transactional
+	public void deleteDiplomePermanently(Long id) {
+	    diplomeRepository.deleteById(id);
+	}
+
 
 }

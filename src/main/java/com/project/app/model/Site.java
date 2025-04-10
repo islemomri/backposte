@@ -18,26 +18,7 @@ public class Site {
     private String nom_site;    
     private boolean archive = false;
 
-    /*@JsonManagedReference
-    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
-    @JoinTable(
-        name = "site_direction",
-        joinColumns = @JoinColumn(name = "site_id"),
-        inverseJoinColumns = @JoinColumn(name = "direction_id")
-    )
-    private Set<Direction> directions = new LinkedHashSet<>();
 
-    
-    
-    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
-    @JoinTable(
-        name = "site_poste",
-        joinColumns = @JoinColumn(name = "site_id"),
-        inverseJoinColumns = @JoinColumn(name = "poste_id")
-    )
-    private Set<Poste> postes;
-    */
-   
 
     public Site() {
         this.archive = false;

@@ -15,4 +15,5 @@ public interface IDiplomeService {
 	public List<Diplome>getAllDiplomes();
 	public Optional<Diplome> getDiplomeById(Long id);
 	public Diplome updateDiplome(Long id, Long idType, String libelleTypeDiplome, String libelle);
+	public void deleteDiplomePermanently(Long id);
 }

@@ -14,6 +14,8 @@ import com.project.app.model.Site;
 import com.project.app.repository.DirectionRepository;
 import com.project.app.repository.SiteRepository;
 
+import jakarta.persistence.EntityNotFoundException;
+
 
 
 
@@ -42,19 +44,31 @@ public class DirectionService implements IDirection {
 		return directionRepository.findByArchiveTrue();
 	}
 
-	@Override
 	public Direction archiverDirection(Long id) {
-		 Direction direction = directionRepository.findById(id).orElseThrow(() -> new RuntimeException("Direction not found"));
-	        direction.archiver(); 
-	        return directionRepository.save(direction);
+	    // Vérifiez si la direction existe
+	    Optional<Direction> direction = directionRepository.findById(id);
+	    if (direction.isPresent()) {
+	        Direction dir = direction.get();
+	        dir.setArchive(true);  // Supposons qu'il y ait un champ 'archived'
+	        return directionRepository.save(dir);  // Sauvegarder la direction archivée
+	    } else {
+	        throw new RuntimeException("Direction non trouvée");
+	    }
 	}
-	
+
 	
 	public Direction desarchiverDirection(Long id) {
-        Direction direction = directionRepository.findById(id).orElseThrow(() -> new RuntimeException("Direction non trouvée"));
-        direction.desarchiver();
-        return directionRepository.save(direction);
-    }
+	    // Vérifiez si la direction existe
+	    Optional<Direction> direction = directionRepository.findById(id);
+	    if (direction.isPresent()) {
+	        Direction dir = direction.get();
+	        dir.setArchive(false);  // Mettre à false pour désarchiver
+	        return directionRepository.save(dir);  // Sauvegarder la direction désarchivée
+	    } else {
+	        throw new RuntimeException("Direction non trouvée");
+	    }
+	}
+
 	
 	
 	@Override
@@ -69,6 +83,22 @@ public class DirectionService implements IDirection {
         } else {
             return null; 
         }
+	}
+	
+	
+	public Direction updateDirection(DirectionDTO directionDTO) {
+	    Direction direction = directionRepository.findById(directionDTO.getId())
+	        .orElseThrow(() -> new EntityNotFoundException("Direction non trouvée avec l'ID: " + directionDTO.getId()));
+	    
+	    direction.setNom_direction(directionDTO.getNom_direction());
+	    
+	    // Gestion des sites si nécessaire
+	    if (directionDTO.getSiteIds() != null) {
+	        List<Site> sites = siteRepository.findAllById(directionDTO.getSiteIds());
+	        direction.setSites(new HashSet<>(sites));
+	    }
+	    
+	    return directionRepository.save(direction);
 	}
 	
 	 public Direction createDirectionWithSites(DirectionDTO directionDTO) {

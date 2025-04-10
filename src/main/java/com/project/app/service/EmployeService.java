@@ -3,6 +3,7 @@ package com.project.app.service;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -26,6 +27,7 @@ import com.project.app.model.Discipline;
 import com.project.app.repository.EmployeRepository;
 import com.project.app.repository.PosteRepository;
 import com.project.app.repository.SiteRepository;
+import com.project.app.repository.employeFormationRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -51,7 +53,8 @@ public class EmployeService implements IEmployeService {
     @Autowired
     private PosteRepository posteRepository;
     
-    
+    @Autowired
+    private employeFormationRepository formationemployeRepository;
     @Autowired
     private SiteRepository siteRepository;
 
@@ -145,6 +148,9 @@ public class EmployeService implements IEmployeService {
         Poste poste = posteRepository.findById(posteId)
                 .orElseThrow(() -> new RuntimeException("Poste non trouvé"));
 
+        // Sauvegarder l'employé d'abord
+        employe = employeRepository.save(employe);
+
         // Créer une nouvelle instance d'EmployePoste pour gérer l'association
         EmployePoste employePoste = new EmployePoste();
         employePoste.setEmploye(employe);
@@ -166,10 +172,8 @@ public class EmployeService implements IEmployeService {
         // Sauvegarder l'entité EmployePoste pour persister l'association avec les dates
         employeposterepository.save(employePoste);
 
-        // Sauvegarder l'employé
-        return employeRepository.save(employe);
+        return employe;
     }
-
 	
 	@Override
 	public Employe ajouterEmploye(EmployeDTO employeDTO) {
@@ -312,33 +316,53 @@ employe.setAjout(false);
 	}
 
 
-
 	@Override
+	@Transactional
 	public List<PosteAvecDatesDTO> getPostesByEmploye(Long employeId) {
-	    // Vérifier si l'employé existe
-	    Employe employe = employeRepository.findById(employeId)
-	            .orElseThrow(() -> new RuntimeException("Employé non trouvé"));
+	    try {
+	        // Récupérer l'employé avec ses EmployePostes et les Postes associés
+	        Employe employe = employeRepository.findById(employeId)
+	                .orElseThrow(() -> {
+	                    System.out.println("Employé non trouvé avec l'ID : " + employeId);
+	                    return new RuntimeException("Employé non trouvé");
+	                });
 
-	    // Récupérer les postes associés à l'employé
-	    return employe.getEmployePostes().stream()
-	            .map(employePoste -> {
-	                Poste poste = employePoste.getPoste();
-	                String nomDirection = (employePoste.getNomDirection() != null) ? employePoste.getNomDirection() : "Non spécifié";
-	                String nomSite = (employePoste.getNomSite() != null) ? employePoste.getNomSite() : "Non spécifié";
+	        // Charger les EmployePostes avec les Postes associés
+	        List<EmployePoste> employePostes = employeposterepository.findByEmployeIdWithPoste(employeId);
 
-	                // Créer un DTO avec les informations nécessaires
-	                return new PosteAvecDatesDTO(
-	                        poste.getId(),
-	                        poste.getTitre(),
-	                        employePoste.getDateDebut(),
-	                        employePoste.getDateFin(),
-	                        nomDirection,    // Ajouter nomDirection
-	                        nomSite          // Ajouter nomSite
-	                );
-	            })
-	            .collect(Collectors.toList());
+	        if (employePostes == null || employePostes.isEmpty()) {
+	            System.out.println("Aucun poste trouvé pour l'employé avec l'ID : " + employeId);
+	            return new ArrayList<>();
+	        }
+
+	        // Convertir les EmployePoste en PosteAvecDatesDTO
+	        return employePostes.stream()
+	                .map(employePoste -> {
+	                    Poste poste = employePoste.getPoste();
+	                    if (poste == null) {
+	                        System.out.println("Poste non trouvé pour EmployePoste avec l'ID : " + employePoste.getId());
+	                        return null;
+	                    }
+
+	                    String nomDirection = (employePoste.getNomDirection() != null) ? employePoste.getNomDirection() : "Non spécifié";
+	                    String nomSite = (employePoste.getNomSite() != null) ? employePoste.getNomSite() : "Non spécifié";
+
+	                    return new PosteAvecDatesDTO(
+	                            poste.getId(),
+	                            poste.getTitre(),
+	                            employePoste.getDateDebut(),
+	                            employePoste.getDateFin(),
+	                            nomDirection,
+	                            nomSite
+	                    );
+	                })
+	                .filter(Objects::nonNull)
+	                .collect(Collectors.toList());
+	    } catch (Exception e) {
+	        System.err.println("Erreur lors de la récupération des postes : " + e.getMessage());
+	        throw e;
+	    }
 	}
-
 	@Override
 	public PosteAvecDatesDTO modifierPosteAEmploye(Long employeId, Long posteId, Long directionId, Long siteId, LocalDate dateDebut, LocalDate dateFin) {
 	    // Récupérer l'employé par son ID
@@ -391,6 +415,7 @@ employe.setAjout(false);
 	}
 
 	@Override
+	@Transactional
 	 public Optional<EmployePoste> getPosteDetailsByEmployeIdAndPosteId(Long employeId, Long posteId) {
         return employeposterepository.findPosteDetailsByEmployeIdAndPosteId(employeId, posteId);
     }
@@ -488,9 +513,41 @@ employe.setAjout(false);
 	public List<Employe> getEmployesWithoutPoste() {
 		 return employeRepository.findEmployesWhereAjoutIsFalse();
 	}
+
+	@Override
+	@Transactional
+	public byte[] getDocumentByEmployeIdAndFormationId(Long employeId, Long formationId) {
+	    return formationemployeRepository.findDocumentByEmployeIdAndFormationId(employeId, formationId);
+	}
+
+	@Override
+	@Transactional
+	public PosteAvecDatesDTO changerPosteEmploye(Long employeId, Long nouveauPosteId, Long directionId, Long siteId) {
+	    
+	    Employe employe = employeRepository.findById(employeId)
+	            .orElseThrow(() -> new RuntimeException("Employé non trouvé"));
+	    
+	  //modifier date actuelle de cette employe 
+	    employe.getEmployePostes().stream()
+	            .filter(ep -> ep.getDateFin() == null)
+	            .findFirst()
+	            .ifPresent(posteActuel -> {
+	                posteActuel.setDateFin(LocalDate.now());
+	                employeposterepository.save(posteActuel);
+	            });
+	    
+	   //ajouter une nouvelle poste avec date debut date de jour et sans date fin 
+	    return ajouterPosteAEmploye(
+	            employeId, 
+	            nouveauPosteId, 
+	            directionId, 
+	            siteId, 
+	            LocalDate.now(), 
+	            null
+	    );
+	}
 }
 
 	
 
 	
-

@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -59,7 +60,7 @@ public class UtilisateurController {
             role = "RESPONSABLE";
         }
 
-        return new UtilisateurResponseDto(utilisateur.getId(), utilisateur.getNom(), utilisateur.getPrenom(), utilisateur.getEmail(), utilisateur.getUsername(), role);
+        return new UtilisateurResponseDto(utilisateur.getId(), utilisateur.getNom(), utilisateur.getPrenom(), utilisateur.getEmail(), utilisateur.getUsername(), role, utilisateur.getLastLogin(), utilisateur.getPermissions());
     }
     @GetMapping("/responsables")
     public ResponseEntity<List<UtilisateurResponseDto>> getResponsables() {
@@ -77,16 +78,18 @@ public class UtilisateurController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('PERM_SUPPRIMER')")
     public ResponseEntity<?> deleteUtilisateur(@PathVariable("id") Long id) {
         utilisateurRepository.deleteById(id);
         return ResponseEntity.ok("Utilisateur supprimé avec succès");
     }
     
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('PERM_EDITER')")
     public ResponseEntity<UtilisateurResponseDto> updateUtilisateur(
             @PathVariable Long id, 
             @RequestBody Utilisateur updatedUtilisateur) {
-        
+
         return utilisateurRepository.findById(id)
                 .map(utilisateur -> {
                     utilisateur.setNom(updatedUtilisateur.getNom());
@@ -98,6 +101,7 @@ public class UtilisateurController {
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
+
     
     @PutMapping("/{id}/reset-password")
     public ResponseEntity<?> resetUserPassword(@PathVariable("id") Long id) {
@@ -108,12 +112,11 @@ public class UtilisateurController {
         ));
     }
     
-    @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
-        String response = authServiceImpl.resetPasswordWithToken(request.getToken(), request.getNewPassword(), request.getConfirmPassword());
-        return ResponseEntity.ok(response);
+    @GetMapping("/all")
+    public ResponseEntity<List<Utilisateur>> getAllUsers() {
+        return ResponseEntity.ok(utilisateurRepository.findAll());
     }
-
+    
 
 
 

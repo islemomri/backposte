@@ -171,32 +171,11 @@ public class AuthServiceImpl implements AuthService{
 	            .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé"));
 	}
 	
-	@Transactional
-	public String resetPasswordWithToken(String token, String newPassword, String confirmPassword) {
-	    return passwordResetTokenRepository.findByToken(token)
-	        .filter(t -> t.getExpiryDate().isAfter(LocalDateTime.now())) // Vérifier expiration
-	        .map(resetToken -> {
-	            if (!newPassword.equals(confirmPassword)) {
-	                throw new IllegalArgumentException("Les mots de passe ne correspondent pas");
-	            }
-
-	            Utilisateur utilisateur = resetToken.getUtilisateur();
-	            utilisateur.setPassword(passwordEncoder.encode(newPassword));
-	            utilisateurRepository.save(utilisateur);
-
-	            // Supprimer le token après utilisation
-	            passwordResetTokenRepository.delete(resetToken);
-
-	            return "Mot de passe réinitialisé avec succès";
-	        })
-	        .orElseThrow(() -> new IllegalArgumentException("Token invalide ou expiré"));
-	}
-	
 	
 
-
-
-
+	public void updateLastLogin(String username) {
+        utilisateurRepository.updateLastLogin(username, LocalDateTime.now());
+    }
 
 
 

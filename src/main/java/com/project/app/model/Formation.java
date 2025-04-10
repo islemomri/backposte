@@ -29,17 +29,39 @@ public class Formation {
     private LocalDate dateFinPrevue;
     private LocalDate dateDebutReelle;
     private LocalDate dateFinReelle;
+    private boolean emailEnvoye;
+    private String fichierPdfUrl;  // Ajouter le champ pour stocker l'URL du fichier PDF
+    private boolean valide= false;
+    private String commentaire;
+    private boolean commente = false;
+    // Getters et setters
+    public String getFichierPdfUrl() {
+        return fichierPdfUrl;
+    }
+
+    public void setFichierPdfUrl(String fichierPdfUrl) {
+        this.fichierPdfUrl = fichierPdfUrl;
+    }
+    // Getters et setters
+    public boolean isEmailEnvoye() {
+        return emailEnvoye;
+    }
+
+    public void setEmailEnvoye(boolean emailEnvoye) {
+        this.emailEnvoye = emailEnvoye;
+    }
 
     @ManyToOne
     @JsonIgnore
     private RH organisateur;
 
     @ManyToOne
-    @JsonIgnore
+    @JoinColumn(name = "responsable_evaluation_id")
     private Utilisateur responsableEvaluation; 
 
     private String responsableEvaluationExterne; 
     
+    private String titrePoste; 
     @ManyToMany
     @JoinTable(
         name = "formation_employe",
@@ -47,6 +69,45 @@ public class Formation {
         inverseJoinColumns = @JoinColumn(name = "employe_id")
     )
     private List<Employe> employes = new ArrayList<>();
+    private LocalDate dateRappel; // Optionnelle : si null, on prend dateFinPrevue - 2
+
+    @Column(name = "rappel_envoye", columnDefinition = "boolean default false")
+    private boolean rappelEnvoye = false;
+
+    // Getters & Setters
+    public boolean isRappelEnvoye() {
+        return rappelEnvoye;
+    }
+
+    public void setRappelEnvoye(boolean rappelEnvoye) {
+        this.rappelEnvoye = rappelEnvoye;
+    }
+    
+    
+    @Column(name = "rappel_obligation_envoye", columnDefinition = "boolean default false")
+    private boolean rappelObligationEnvoye = false;
+
+    // Getters & Setters
+    public boolean isRappelObligationEnvoye() {
+        return rappelObligationEnvoye;
+    }
+
+    public void setRappelObligationEnvoye(boolean rappelObligationEnvoye) {
+        this.rappelObligationEnvoye = rappelObligationEnvoye;
+    }
+    
+    @Column(name = "confirmation_organisateur_envoyee", columnDefinition = "boolean default false")
+    private boolean confirmationOrganisateurEnvoyee = false;
+
+    // Getters & Setters
+    public boolean isConfirmationOrganisateurEnvoyee() {
+        return confirmationOrganisateurEnvoyee;
+    }
+
+    public void setConfirmationOrganisateurEnvoyee(boolean confirmationOrganisateurEnvoyee) {
+        this.confirmationOrganisateurEnvoyee = confirmationOrganisateurEnvoyee;
+    }
+    
     
     
 }

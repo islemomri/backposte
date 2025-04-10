@@ -1,9 +1,12 @@
 package com.project.app.controller;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -197,4 +200,39 @@ public class EmployeController {
     public List<Employe> getEmployesWithoutPoste() {
         return employeService.getEmployesWithoutPoste();
     }
+    
+    
+    @GetMapping("/document")
+    public ResponseEntity<byte[]> getDocumentByEmployeIdAndFormationId(
+            @RequestParam Long employeId,
+            @RequestParam Long formationId) {
+
+        // Récupérer le document depuis le service
+        byte[] document = employeService.getDocumentByEmployeIdAndFormationId(employeId, formationId);
+
+        if (document != null) {
+            // Retourner le document avec un statut OK
+            return ResponseEntity.ok(document);
+        } else {
+            // Retourner un statut NOT_FOUND si aucun document n'est trouvé
+            return ResponseEntity.notFound().build();
+        }
+    }
+    
+    @PostMapping("/changer-poste")
+    public ResponseEntity<PosteAvecDatesDTO> changerPosteEmploye(
+            @RequestParam Long employeId,
+            @RequestParam Long nouveauPosteId,
+            @RequestParam Long directionId,
+            @RequestParam Long siteId) {
+        
+        try {
+            PosteAvecDatesDTO result = employeService.changerPosteEmploye(employeId, nouveauPosteId, directionId, siteId);
+            return ResponseEntity.ok(result);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+    
+    
 }

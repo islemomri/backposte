@@ -5,9 +5,13 @@ import com.project.app.model.Direction;
 import com.project.app.model.Poste;
 import com.project.app.repository.DirectionRepository;
 import com.project.app.repository.PosteRepository;
+
+import jakarta.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -38,14 +42,18 @@ public class PosteService implements IPosteService {
     }
 
     @Override
-    public Poste updatePoste(Long id, PosteDTO posteDto) {
+    @Transactional
+    public Poste updatePoste(Long id, PosteDTO posteDto) throws IOException {
         Poste poste = posteRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Poste introuvable avec l'ID : " + id));
 
+        // Mettre à jour les champs de base
         poste.setTitre(posteDto.getTitre());
         poste.setNiveauExperience(posteDto.getNiveauExperience());
         poste.setDiplomeRequis(posteDto.getDiplomeRequis());
         poste.setCompetencesRequises(posteDto.getCompetencesRequises());
+
+        // Mettre à jour les directions
         Set<Direction> directions = posteDto.getDirectionIds() != null
                 ? posteDto.getDirectionIds().stream()
                   .map(directionRepository::findById)
@@ -56,7 +64,41 @@ public class PosteService implements IPosteService {
 
         poste.setDirections(directions);
 
-        return posteRepository.save(poste);
+        // Mettre à jour le fichier si présent
+        if (posteDto.getDocument() != null) {
+            poste.setDocument(posteDto.getDocument().getBytes());  // Convertir le fichier en tableau de bytes
+        }
+
+        return posteRepository.save(poste);  // Sauvegarder les modifications
+    }
+    
+	@Override
+	@Transactional
+
+	 public Poste addPosteWithDirections(PosteDTO posteDTO) throws IOException {
+        Poste poste = new Poste();
+        poste.setTitre(posteDTO.getTitre());
+        poste.setNiveauExperience(posteDTO.getNiveauExperience());
+        poste.setDiplomeRequis(posteDTO.getDiplomeRequis());
+        poste.setCompetencesRequises(posteDTO.getCompetencesRequises());
+
+        // Récupérer les directions par leurs IDs
+        Set<Direction> directions = new HashSet<>();
+        for (Long directionId : posteDTO.getDirectionIds()) {
+            Direction direction = directionRepository.findById(directionId).orElse(null);
+            if (direction != null) {
+                directions.add(direction);
+            }
+        }
+
+        poste.setDirections(directions);
+
+        // Ajouter le fichier Word dans le modèle si présent
+        if (posteDTO.getDocument() != null) {
+            poste.setDocument(posteDTO.getDocument().getBytes());  // Convertir le fichier en tableau de bytes
+        }
+
+        return posteRepository.save(poste);  // Sauvegarder le poste dans la base de données
     }
 
     @Override
@@ -67,6 +109,7 @@ public class PosteService implements IPosteService {
     }
 
 	@Override
+	@Transactional
 	public List<Poste> getAllPostesnonArchivés() {
 		return posteRepository.findByArchiveFalse();
 	}
@@ -79,6 +122,7 @@ public class PosteService implements IPosteService {
 	}
 
 	@Override
+	 @Transactional
 	public List<Poste> getAllPostesArchivés() {
 		return posteRepository.findByArchiveTrue();
 	}
@@ -90,26 +134,7 @@ public class PosteService implements IPosteService {
         return posteRepository.save(Poste);
 	}
 	
-	 public Poste addPosteWithDirections(PosteDTO posteDTO) {
-	        Poste poste = new Poste();
-	        poste.setTitre(posteDTO.getTitre());
-	        poste.setNiveauExperience(posteDTO.getNiveauExperience());
-	        poste.setDiplomeRequis(posteDTO.getDiplomeRequis());
-	        poste.setCompetencesRequises(posteDTO.getCompetencesRequises());
 
-	        // Récupérer les directions par leurs IDs
-	        Set<Direction> directions = new HashSet<>();
-	        for (Long directionId : posteDTO.getDirectionIds()) {
-	            Direction direction = directionRepository.findById(directionId).orElse(null);
-	            if (direction != null) {
-	                directions.add(direction);
-	            }
-	        }
-
-	        poste.setDirections(directions);
-
-	        return posteRepository.save(poste);
-	    }
 
 	@Override
 	public Optional<Set<Direction>> getDirectionsByPosteId(Long id) {

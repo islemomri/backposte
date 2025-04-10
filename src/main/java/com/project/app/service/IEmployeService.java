@@ -17,6 +17,8 @@ import com.project.app.model.ExperienceAnterieure;
 import com.project.app.model.ExperienceAssad;
 import com.project.app.model.Poste;
 
+import jakarta.transaction.Transactional;
+
 public interface IEmployeService {
 	public List<Employe> getAllEmployes();
 	 public Employe addEmploye(Employe employe);
@@ -42,5 +44,7 @@ public interface IEmployeService {
 	  public Employe ajouterEmployeAvecPoste(Long posteId, Long directionId, Long siteId, Employe employe, LocalDate dateDebut, LocalDate dateFin);
 	  public Employe modifierEmploye(Long id, Employe employeModifie, Long posteId, Long directionId, Long siteId, LocalDate dateDebut, LocalDate dateFin) ;
 	  public List<Employe> getEmployesWithoutPoste();
+		public byte[] getDocumentByEmployeIdAndFormationId(Long employeId, Long formationId) ;
+		public PosteAvecDatesDTO changerPosteEmploye(Long employeId, Long nouveauPosteId, Long directionId, Long siteId);
 	  
 }

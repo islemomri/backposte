@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -96,6 +97,7 @@ public class DiplomeController {
     }
     
     @PostMapping("/{id_type}")
+    @PreAuthorize("hasAuthority('PERM_AJOUTER_DIPLOME')")
     public ResponseEntity<Diplome> addDiplome(@PathVariable("id_type") Long id,@RequestBody DiplomeRequest request) {
         Diplome diplome = diplomeService.saveDiplome(id,request.getLibelleTypeDiplome(), request.getLibelle());
         return ResponseEntity.ok(diplome);
@@ -115,6 +117,14 @@ public class DiplomeController {
 	    Diplome updatedDiplome = diplomeService.updateDiplome(id, request.getIdType(), request.getLibelleTypeDiplome(), request.getLibelle());
 	    return ResponseEntity.ok(updatedDiplome);
 	}
+    
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteDiplomePermanently(@PathVariable("id") Long id) {
+        System.out.println("Suppression du diplôme avec ID: " + id);
+        diplomeService.deleteDiplomePermanently(id);
+        return ResponseEntity.noContent().build();
+    }
+
 
 
 

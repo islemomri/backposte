@@ -1,5 +1,6 @@
 package com.project.app.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -26,7 +27,11 @@ public interface EmployePosteRepository extends JpaRepository<EmployePoste, Long
     
     @Transactional
     void deleteByEmployeIdAndPosteId(Long employeId, Long posteId);
+    
+    
+    @Query("SELECT ep FROM EmployePoste ep JOIN FETCH ep.poste WHERE ep.employe.id = :employeId")
+    List<EmployePoste> findByEmployeIdWithPoste(@Param("employeId") Long employeId);
+    
 	}
-
 
 

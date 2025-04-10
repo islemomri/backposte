@@ -2,9 +2,12 @@ package com.project.app.controller;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,9 +18,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.project.app.dto.NomSiteRequest;
+import com.project.app.dto.SiteRequest;
 import com.project.app.model.Direction;
 import com.project.app.model.Poste;
 import com.project.app.model.Site;
+import com.project.app.repository.SiteRepository;
 import com.project.app.service.DirectionService;
 import com.project.app.service.SiteService;
 
@@ -28,7 +34,8 @@ public class SiteController {
 	    private SiteService siteService;
 	 @Autowired
 	    private DirectionService directionService;
-
+	 @Autowired
+	    private SiteRepository siteRepository;
 	    
 	    @PostMapping("/ajouter")
 	    public Site ajouterSite(@RequestBody Site site) {
@@ -42,57 +49,59 @@ public class SiteController {
 	        return sites;
 	    }
 
-	  /*  @PutMapping("/{id}")
-	    public ResponseEntity<Site> updateSite(@PathVariable Long id, @RequestBody Site siteDetails) {
-	        Site updatedSite = siteService.updateSite(id, siteDetails);
-	        if (updatedSite != null) {
-	            return ResponseEntity.ok(updatedSite);  
-	        } else {
-	            return ResponseEntity.notFound().build();
+	    @PutMapping("/modifier-nom")
+	    public Site updateSiteName(@RequestBody NomSiteRequest request) {
+	        Long id = request.getId();
+	        String newNomSite = request.getNom_site();
+
+	        if (newNomSite == null || newNomSite.trim().isEmpty()) {
+	            throw new IllegalArgumentException("Le nouveau nom du site ne peut pas être vide.");
 	        }
-	    }*/
-	  /*  @PutMapping("/{id}")
-	    public Site updateSite(@PathVariable Long id, @RequestBody SiteRequest updatedSiteDTO) throws Exception {
-	        return siteService.updateSite(id, updatedSiteDTO);  // Appel du service pour mettre à jour le site
-	    }
-	    @DeleteMapping("/{id}")
-	    public ResponseEntity<Void> deleteSite(@PathVariable Long id) {
-	        boolean deleted = siteService.deleteSite(id);
-	        if (deleted) {
-	            return ResponseEntity.noContent().build();  
+
+	        Optional<Site> optionalSite = siteRepository.findById(id);
+	        if (optionalSite.isPresent()) {
+	            Site site = optionalSite.get();
+	            site.setNom_site(newNomSite);
+	            return siteRepository.save(site);
 	        } else {
-	            return ResponseEntity.notFound().build();  
+	            throw new RuntimeException("Site avec ID " + id + " introuvable.");
 	        }
 	    }
-	    */
-	    @PutMapping("/{id}/archiver")
-	    public Site archiverSite(@PathVariable Long id) {
-	        return siteService.archiverSite(id);
-	    }
+
+
+	  
 	    @GetMapping("/liste-sites-archivés")
 	    public List<Site> getAllsitesArchivés() {
 	        return siteService.getAllSitesArchivés();
 	    }
 	    
 	    
-	    @PutMapping("/{id}/desarchiver")
-	    public Site desarchiverSite(@PathVariable Long id) {
-	        return siteService.desarchiverSite(id);
+	    @PutMapping("/archiver")
+	    public ResponseEntity<Site> archiverSite(@RequestBody SiteRequest request) {
+	        try {
+	            // Utilisation du service pour archiver le site avec l'ID dans le corps
+	            Site site = siteService.archiverSite(request.getId());
+	            return ResponseEntity.ok(site);  // Retourner le site archivé en réponse
+	        } catch (RuntimeException e) {
+	            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);  // Retour d'une erreur 404 si site non trouvé
+	        }
 	    }
-	    
 
-	    
-	   /* @GetMapping("/{siteId}/directions")
-	    public Set<Direction> getDirections(@PathVariable Long siteId) {
-	        return directionService.getDirectionsBySiteId(siteId);
-	    }*/
-	    
-	  /*  
-	    @GetMapping("/{siteId}/postes")
-	    public List<Poste> getPostesBySiteId(@PathVariable Long siteId) {
-	        return siteService.getPostesBySiteId(siteId);
+
+
+	    @PutMapping("/desarchiver")
+	    public ResponseEntity<Site> desarchiverSite(@RequestBody SiteRequest request) {
+	        try {
+	            // Utilisation du service pour désarchiver le site avec l'ID dans le corps
+	            Site site = siteService.desarchiverSite(request.getId());
+	            return ResponseEntity.ok(site);  // Retourner le site désarchivé en réponse
+	        } catch (RuntimeException e) {
+	            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);  // Retour d'une erreur 404 si site non trouvé
+	        }
 	    }
-	    */
+
+
+
 	    
 	    
 }

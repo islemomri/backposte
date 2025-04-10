@@ -8,9 +8,12 @@ import org.springframework.stereotype.Repository;
 import com.project.app.model.PasswordResetToken;
 import com.project.app.model.Utilisateur;
 
+import jakarta.transaction.Transactional;
+
 @Repository
 public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetToken, Long> {
-	Optional<PasswordResetToken> findByToken(String token);
-	void deleteByUtilisateur(Utilisateur utilisateur);
-	
+    Optional<PasswordResetToken> findByToken(String token);
+    @Transactional
+    void deleteByUtilisateur(Utilisateur utilisateur);
+
 }

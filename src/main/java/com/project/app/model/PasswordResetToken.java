@@ -13,23 +13,17 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Data
-@NoArgsConstructor
 public class PasswordResetToken {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String token;
     private LocalDateTime expiryDate;
 
     @OneToOne
     @JoinColumn(name = "utilisateur_id", nullable = false)
     private Utilisateur utilisateur;
-
-
-    public PasswordResetToken(String token, Utilisateur utilisateur, LocalDateTime expiryDate) {
-        this.token = token;
-        this.utilisateur = utilisateur;
-        this.expiryDate = expiryDate;
-    }
 }
+
 

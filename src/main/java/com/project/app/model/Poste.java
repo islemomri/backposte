@@ -22,13 +22,15 @@ public class Poste {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+    @Lob  // Permet de stocker de grandes quantités de données
+    private byte[] document;
     private String titre;
     
     private String niveauExperience; 
     private String diplomeRequis;
     private String competencesRequises;
     private boolean archive = false;
+    
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "poste_direction",  // Nom de la table de jointure
